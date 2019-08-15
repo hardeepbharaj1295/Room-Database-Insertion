@@ -6,6 +6,10 @@ import androidx.test.runner.AndroidJUnit4
 import com.daemonvision.roompractice1.database.Note
 import com.daemonvision.roompractice1.database.NoteDao
 import com.daemonvision.roompractice1.database.NoteDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -19,6 +23,9 @@ class NoteDatabaseTest {
     private lateinit var noteDao: NoteDao
     private lateinit var db: NoteDatabase
 
+    private var viewModel = Job()
+    private val uiScope = CoroutineScope(Dispatchers.Main + viewModel)
+
     @Before
     fun createDb()
     {
@@ -30,7 +37,7 @@ class NoteDatabaseTest {
             .allowMainThreadQueries()
             .build()
 
-        noteDao = db.noteDao
+        noteDao = db.noteDao()
     }
 
     @After
@@ -44,7 +51,9 @@ class NoteDatabaseTest {
     @Throws(IOException::class)
     fun insertAndGetNote(){
         val note = Note(1,"Title","Description")
-        noteDao.insert(note)
+        uiScope.launch {
+            noteDao.insert(note)
+        }
         val getNote = noteDao.getNote()
         assertEquals(getNote?.title,"Title")
     }
